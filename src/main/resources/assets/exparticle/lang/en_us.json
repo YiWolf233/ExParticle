@@ -5,5 +5,6 @@
   "argument.rotate.invalid": "Invalid rotation angle (requires an integer multiple of 90)",
   "argument.flip.invalid": "Invalid flip parameter",
   "argument.group.change.type.invalid": "Invalid group transformation option",
-  "command.video.unavailable": "JavaCV is not available. If you want use video command, please install %s first"
+  "command.video.unavailable": "JavaCV is not available. If you want use video command, please install %s first",
+  "command.user_function.invalid_id": "Invalid id: %s"
 }

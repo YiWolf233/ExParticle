@@ -21,10 +21,10 @@ public class GlobalVariableUtil {
     }
 
     private static final Map<String, Var> vars = new HashMap<>();
-    private static final Map<String, List<ClassExpression>> handlers = new HashMap<>();
+    private static final Map<String, List<ICacheAble>> handlers = new HashMap<>();
 
     private static void update(String name) {
-        if (handlers.containsKey(name)) handlers.remove(name).forEach(ClassExpression::invalid);
+        if (handlers.containsKey(name)) handlers.remove(name).forEach(ICacheAble::invalid);
     }
 
     public static void define(String name, Type type, Object value) {
@@ -43,7 +43,7 @@ public class GlobalVariableUtil {
         update(name);
     }
 
-    public static void handle(String name, ClassExpression c) {
+    public static void handle(String name, ICacheAble c) {
         handlers.putIfAbsent(name, new ArrayList<>());
         var list = handlers.get(name);
         list.add(c);

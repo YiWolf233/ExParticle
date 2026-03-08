@@ -38,6 +38,7 @@ public class CodeGen {
     private final Map<String, LocalVarInfo> localVars = new HashMap<>();
     private static MethodHandle defineClass;
     private final Set<String> references = new HashSet<>();
+    private final Set<String> funcReferences = new HashSet<>();
 
     public static void init(MethodHandles.Lookup lookup) throws Throwable {
         defineClass = lookup.findSpecial(ClassLoader.class, "defineClass", MethodType.methodType(Class.class, String.class, byte[].class, int.class, int.class), ClassLoader.class);
@@ -54,7 +55,29 @@ public class CodeGen {
         addLocalVar("this", T_UNKNOW);
         mv.visitCode();
         for (int i = 0; i < block.length - 1; ++i) codeGenExp(block[i], T_VOID);
-        codeGenReturn(block[block.length - 1]);
+        codeGenExp(block[block.length - 1], T_INT);
+        mv.visitInsn(IRETURN);
+        mv.visitMaxs(0, 0);
+        mv.visitEnd();
+        cw.visitEnd();
+        var bytes = cw.toByteArray();
+        return (Class<?>) defineClass.invokeExact(Thread.currentThread().getContextClassLoader(), "net.hackermdch.exparticle.util.CodeGen$" + name, bytes, 0, bytes.length);
+    }
+
+    public Class<?> codeGenFunction(String name, String signature, int retType, String... args) throws Throwable {
+        cw.visit(V21, ACC_PUBLIC | ACC_SUPER, "net/hackermdch/exparticle/util/CodeGen$" + name, null, "java/lang/Object", null);
+        cw.visitInnerClass("net/hackermdch/exparticle/util/CodeGen$" + name, "net/hackermdch/exparticle/util/CodeGen", name, ACC_PUBLIC | ACC_STATIC);
+        mv = cw.visitMethod(ACC_PUBLIC | ACC_STATIC, "invoke", signature, null, null);
+        for (var a : args) addLocalVar(a, T_DOUBLE);
+        mv.visitCode();
+        for (int i = 0; i < block.length - 1; ++i) codeGenExp(block[i], T_VOID);
+        codeGenExp(block[block.length - 1], retType);
+        mv.visitInsn(switch (retType) {
+            case T_INT -> IRETURN;
+            case T_DOUBLE -> DRETURN;
+            case T_INTMAT, T_DOUBLEMAT -> ARETURN;
+            default -> throw new IllegalArgumentException();
+        });
         mv.visitMaxs(0, 0);
         mv.visitEnd();
         cw.visitEnd();
@@ -64,6 +87,10 @@ public class CodeGen {
 
     public List<String> references() {
         return ImmutableList.copyOf(references);
+    }
+
+    public List<String> funcReferences() {
+        return ImmutableList.copyOf(funcReferences);
     }
 
     private int codeGenExp(Expression exp, int targetType) {
@@ -84,14 +111,10 @@ public class CodeGen {
             case Expression.NameExp nameExp -> codeGenTypeTransform(codeGenNameExp(nameExp.name), targetType);
             case Expression.FunctionCallExp functionCallExp ->
                     codeGenTypeTransform(codeGenFunctionCallExp(functionCallExp.name, functionCallExp.args), targetType);
-            case null, default ->
-                    exp instanceof Expression.AssignExp ? codeGenTypeTransform(codeGenAssignExp(((Expression.AssignExp) exp).varList, ((Expression.AssignExp) exp).expList, targetType != T_VOID), targetType) : T_VOID;
+            case Expression.AssignExp assignExp ->
+                    codeGenTypeTransform(codeGenAssignExp(assignExp.varList, assignExp.expList, targetType != T_VOID), targetType);
+            case null, default -> T_VOID;
         };
-    }
-
-    private void codeGenReturn(Expression exp) {
-        codeGenExp(exp, T_INT);
-        mv.visitInsn(IRETURN);
     }
 
     private int codeGenLoadInteger(int n) {
@@ -460,143 +483,140 @@ public class CodeGen {
     }
 
     private int codeGenFunctionCallExp(String name, Expression[] args) {
+        var uf = UserFunctionUtil.find(name);
+        if (uf != null) {
+            for (var a : args) codeGenExp(a, T_DOUBLE);
+            mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(uf.getMethod().getDeclaringClass()), "invoke", uf.signature, false);
+            funcReferences.add(name);
+            return T_DOUBLE;
+        }
         var methods = new ArrayList<Method>();
         for (var method : METHODS) {
-            if (method.getName().equals(name) && method.getParameterCount() == args.length) {
-                methods.add(method);
+            if (method.getName().equals(name) && method.getParameterCount() == args.length) methods.add(method);
+        }
+        if (methods.isEmpty()) throw new RuntimeException("function not found: " + name);
+        for (var arg : args) {
+            if (arg.returnType == T_UNKNOW) {
+                startSimulation();
+                arg.returnType = codeGenExp(arg, T_UNKNOW);
+                stopSimulation();
             }
         }
-        if (methods.isEmpty()) {
-            throw new RuntimeException("function not found: " + name);
-        } else {
-            for (var arg : args) {
-                if (arg.returnType == T_UNKNOW) {
-                    startSimulation();
-                    arg.returnType = codeGenExp(arg, T_UNKNOW);
-                    stopSimulation();
-                }
-            }
-            int maxSimilarity = 0;
-            int maxSimilarityIndex = T_UNKNOW;
-            if (args.length == 0) {
-                maxSimilarityIndex = 0;
-            } else {
-                int i = 0;
-                while (i < methods.size()) {
-                    var method = methods.get(i);
-                    var parameterTypes = method.getParameterTypes();
-                    int similarity = 0;
-                    int j = 0;
-                    while (true) {
-                        label:
-                        {
-                            if (j < args.length) {
-                                switch (args[j].returnType) {
-                                    case T_DOUBLE:
-                                        if (parameterTypes[j] == int.class) {
-                                            similarity += 4;
-                                            break label;
-                                        }
-                                        if (parameterTypes[j] == double.class) {
-                                            similarity += 6;
-                                            break label;
-                                        }
-                                        break;
-                                    case T_INT:
-                                        if (parameterTypes[j] == int.class) {
-                                            similarity += 6;
-                                            break label;
-                                        }
-                                        if (parameterTypes[j] == double.class) {
-                                            similarity += 5;
-                                            break label;
-                                        }
-                                        break;
-                                    case T_INTMAT:
-                                        if (parameterTypes[j] == int[][].class) {
-                                            similarity += 6;
-                                            break label;
-                                        }
-                                        if (parameterTypes[j] == int.class) {
-                                            similarity += 3;
-                                            break label;
-                                        }
-                                        if (parameterTypes[j] == double.class) {
-                                            similarity += 2;
-                                            break label;
-                                        }
-                                        break;
-                                    case T_DOUBLEMAT:
-                                        if (parameterTypes[j] == double[][].class) {
-                                            similarity += 6;
-                                            break label;
-                                        }
-                                        if (parameterTypes[j] == int.class) {
-                                            ++similarity;
-                                            break label;
-                                        }
-                                        if (parameterTypes[j] == double.class) {
-                                            similarity += 3;
-                                            break label;
-                                        }
-                                        break;
-                                    case T_BYTE:
-                                    case T_SHORT:
-                                    case T_LONG:
-                                    default:
-                                        throw new RuntimeException("bad type: " + args[j].returnType);
-                                }
-                            } else if (similarity > maxSimilarity) {
-                                maxSimilarity = similarity;
-                                maxSimilarityIndex = i;
-                            }
-                            ++i;
-                            break;
-                        }
-                        ++j;
-                    }
-                }
-            }
-            if (maxSimilarityIndex == T_UNKNOW) {
-                throw new RuntimeException("function not found: " + name);
-            } else {
-                var method = methods.get(maxSimilarityIndex);
+        int maxSimilarity = 0;
+        int maxSimilarityIndex = T_UNKNOW;
+        if (args.length != 0) {
+            int i = 0;
+            while (i < methods.size()) {
+                var method = methods.get(i);
                 var parameterTypes = method.getParameterTypes();
-                var returnType = method.getReturnType();
-                var sb = new StringBuilder();
-                sb.append("(");
-                for (int i = 0; i < args.length; ++i) {
-                    if (parameterTypes[i].isArray()) {
-                        codeGenExp(args[i], parameterTypes[i] == int[][].class ? T_INTMAT : T_DOUBLEMAT);
-                        sb.append(parameterTypes[i] == int[][].class ? "[[I" : "[[D");
-                    } else {
-                        codeGenExp(args[i], parameterTypes[i] == int.class ? T_INT : T_DOUBLE);
-                        sb.append(parameterTypes[i] == int.class ? "I" : "D");
+                int similarity = 0;
+                int j = 0;
+                while (true) {
+                    label:
+                    {
+                        if (j < args.length) {
+                            switch (args[j].returnType) {
+                                case T_DOUBLE:
+                                    if (parameterTypes[j] == int.class) {
+                                        similarity += 4;
+                                        break label;
+                                    }
+                                    if (parameterTypes[j] == double.class) {
+                                        similarity += 6;
+                                        break label;
+                                    }
+                                    break;
+                                case T_INT:
+                                    if (parameterTypes[j] == int.class) {
+                                        similarity += 6;
+                                        break label;
+                                    }
+                                    if (parameterTypes[j] == double.class) {
+                                        similarity += 5;
+                                        break label;
+                                    }
+                                    break;
+                                case T_INTMAT:
+                                    if (parameterTypes[j] == int[][].class) {
+                                        similarity += 6;
+                                        break label;
+                                    }
+                                    if (parameterTypes[j] == int.class) {
+                                        similarity += 3;
+                                        break label;
+                                    }
+                                    if (parameterTypes[j] == double.class) {
+                                        similarity += 2;
+                                        break label;
+                                    }
+                                    break;
+                                case T_DOUBLEMAT:
+                                    if (parameterTypes[j] == double[][].class) {
+                                        similarity += 6;
+                                        break label;
+                                    }
+                                    if (parameterTypes[j] == int.class) {
+                                        ++similarity;
+                                        break label;
+                                    }
+                                    if (parameterTypes[j] == double.class) {
+                                        similarity += 3;
+                                        break label;
+                                    }
+                                    break;
+                                case T_BYTE:
+                                case T_SHORT:
+                                case T_LONG:
+                                default:
+                                    throw new RuntimeException("bad type: " + args[j].returnType);
+                            }
+                        } else if (similarity > maxSimilarity) {
+                            maxSimilarity = similarity;
+                            maxSimilarityIndex = i;
+                        }
+                        ++i;
+                        break;
                     }
+                    ++j;
                 }
-                sb.append(")");
-                if (returnType.isArray()) {
-                    if (returnType == int[][].class) {
-                        sb.append("[[I");
-                        mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(method.getDeclaringClass()), name, sb.toString(), false);
-                        return T_INTMAT;
-                    } else {
-                        sb.append("[[D");
-                        mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(method.getDeclaringClass()), name, sb.toString(), false);
-                        return T_DOUBLEMAT;
-                    }
-                } else {
-                    if (returnType == long.class) {
-                        sb.append("J");
-                        mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(method.getDeclaringClass()), name, sb.toString(), false);
-                        mv.visitInsn(L2I);
-                        return T_INT;
-                    } else {
-                        sb.append(returnType == int.class ? "I" : "D");
-                        mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(method.getDeclaringClass()), name, sb.toString(), false);
-                        return returnType == int.class ? T_INT : T_DOUBLE;
-                    }
-                }
+            }
+        }
+        if (maxSimilarityIndex == T_UNKNOW) throw new RuntimeException("function not found: " + name);
+        var method = methods.get(maxSimilarityIndex);
+        var parameterTypes = method.getParameterTypes();
+        var returnType = method.getReturnType();
+        var sb = new StringBuilder();
+        sb.append("(");
+        for (int i = 0; i < args.length; ++i) {
+            if (parameterTypes[i].isArray()) {
+                codeGenExp(args[i], parameterTypes[i] == int[][].class ? T_INTMAT : T_DOUBLEMAT);
+                sb.append(parameterTypes[i] == int[][].class ? "[[I" : "[[D");
+            } else {
+                codeGenExp(args[i], parameterTypes[i] == int.class ? T_INT : T_DOUBLE);
+                sb.append(parameterTypes[i] == int.class ? "I" : "D");
+            }
+        }
+        sb.append(")");
+        if (returnType.isArray()) {
+            if (returnType == int[][].class) {
+                sb.append("[[I");
+                mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(method.getDeclaringClass()), name, sb.toString(), false);
+                return T_INTMAT;
+            } else {
+                sb.append("[[D");
+                mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(method.getDeclaringClass()), name, sb.toString(), false);
+                return T_DOUBLEMAT;
+            }
+        } else {
+            if (returnType == long.class) {
+                sb.append("J");
+                mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(method.getDeclaringClass()), name, sb.toString(), false);
+                mv.visitInsn(L2I);
+                return T_INT;
+            } else {
+                sb.append(returnType == int.class ? "I" : "D");
+                mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(method.getDeclaringClass()), name, sb.toString(), false);
+                return returnType == int.class ? T_INT : T_DOUBLE;
             }
         }
     }
@@ -604,9 +624,7 @@ public class CodeGen {
     private int codeGenAssignExp(Expression[] varList, Expression[] expList, boolean needReturn) {
         var types = new int[expList.length];
         for (int i = 0; i < expList.length; ++i) {
-            if (varList[i] instanceof Expression.NameExp && FIELDS.contains(((Expression.NameExp) varList[i]).name)) {
-                mv.visitVarInsn(ALOAD, 0);
-            }
+            if (varList[i] instanceof Expression.NameExp ne && FIELDS.contains(ne.name)) mv.visitVarInsn(ALOAD, 0);
             types[i] = codeGenExp(expList[i], T_UNKNOW);
         }
         if (needReturn) {
@@ -614,17 +632,12 @@ public class CodeGen {
             codeGenStore("__RETURN", types[expList.length - 1]);
         }
         for (int i = varList.length - 1; i >= 0; --i) {
-            if (varList[i] instanceof Expression.NameExp) {
-                codeGenStore(((Expression.NameExp) varList[i]).name, types[i]);
-            } else if (varList[i] instanceof Expression.NameMatrixExp) {
-                if (types[i] != T_INTMAT && types[i] != T_DOUBLEMAT) {
+            if (varList[i] instanceof Expression.NameMatrixExp nme) {
+                if (types[i] != T_INTMAT && types[i] != T_DOUBLEMAT)
                     throw new RuntimeException("can't deconstruction number: " + types[i]);
-                }
-                var names = ((Expression.NameMatrixExp) varList[i]).names;
+                var names = nme.names;
                 for (int j = 0; j < names.length; ++j) {
-                    if (j < names.length - 1) {
-                        mv.visitInsn(DUP);
-                    }
+                    if (j < names.length - 1) mv.visitInsn(DUP);
                     codeGenLoadInteger(j);
                     mv.visitInsn(AALOAD);
                     for (int k = 0; k < names[j].length; ++k) {
@@ -637,7 +650,7 @@ public class CodeGen {
                         codeGenStore(names[j][k].name, types[i] == T_INTMAT ? T_INT : T_DOUBLE);
                     }
                 }
-            }
+            } else if (varList[i] instanceof Expression.NameExp ne) codeGenStore(ne.name, types[i]);
         }
         if (needReturn) codeGenNameExp("__RETURN");
         return needReturn ? types[expList.length - 1] : T_VOID;
