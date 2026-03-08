@@ -15,6 +15,43 @@ public class ExFunctions {
         return start + delta * (end - start);
     }
 
+    public static double quadraticLerp(double delta, double start, double end, double x1, double y1) {
+        if (delta <= 0) return start;
+        if (delta >= 1) return end;
+        x1 = Math.clamp(x1, 0, 1);
+        var tMin = 0.0;
+        var tMax = 1.0;
+        var t = 0.5;
+        while (tMax - tMin > 1e-10) {
+            var xT = 2 * (1 - t) * t * x1 + t * t;
+            if (Math.abs(xT - delta) < 1e-10) break;
+            if (xT < delta) tMin = t;
+            else tMax = t;
+            t = (tMin + tMax) * 0.5;
+        }
+        return start + (2 * (1 - t) * t * y1 + t * t) * (end - start);
+    }
+
+    public static double cubicLerp(double delta, double start, double end, double x1, double y1, double x2, double y2) {
+        if (delta <= 0) return start;
+        if (delta >= 1) return end;
+        x1 = Math.clamp(x1, 0, 1);
+        x2 = Math.clamp(x2, 0, 1);
+        var tMin = 0.0;
+        var tMax = 1.0;
+        var t = 0.5;
+        while (tMax - tMin > 1e-10) {
+            var oMT = 1.0 - t;
+            var xT = 3 * oMT * oMT * t * x1 + 3 * oMT * t * t * x2 + t * t * t;
+            if (Math.abs(xT - delta) < 1e-10) break;
+            if (xT < delta) tMin = t;
+            else tMax = t;
+            t = (tMin + tMax) * 0.5;
+        }
+        var oMT = 1.0 - t;
+        return start + (3 * oMT * oMT * t * y1 + 3 * oMT * t * t * y2 + t * t * t) * (end - start);
+    }
+
     public static double[][] transpose(double[][] matrix) {
         if (matrix == null || matrix.length == 0) return new double[0][0];
         int originalRows = matrix.length;
