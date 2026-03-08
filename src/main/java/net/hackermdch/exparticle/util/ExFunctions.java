@@ -1,5 +1,7 @@
 package net.hackermdch.exparticle.util;
 
+import org.joml.Quaterniond;
+
 import static net.minecraft.util.Mth.floor;
 
 @SuppressWarnings("unused")
@@ -50,6 +52,12 @@ public class ExFunctions {
         }
         var oMT = 1.0 - t;
         return start + (3 * oMT * oMT * t * y1 + 3 * oMT * t * t * y2 + t * t * t) * (end - start);
+    }
+
+    public static Quaterniond slerp(double delta, Quaterniond start, Quaterniond end) {
+        if (delta <= 0) return start;
+        if (delta >= 1) return end;
+        return start.slerp(end, delta, new Quaterniond());
     }
 
     public static double[][] transpose(double[][] matrix) {
@@ -141,10 +149,14 @@ public class ExFunctions {
         var srcp = sr * cp;
         var crsp = cr * sp;
         var srsp = sr * sp;
-        var w = crcp * cy;
-        var x = crsp * cy - srcp * sy;
-        var y = crcp * sy;
-        var z = srcp * cy + crsp * sy;
+        return rotate(new Quaterniond(crsp * cy - srcp * sy, crcp * sy, srcp * cy + crsp * sy, crcp * cy));
+    }
+
+    public static double[][] rotate(Quaterniond q) {
+        var x = q.x;
+        var y = q.y;
+        var z = q.z;
+        var w = q.w;
         var xx = x * x;
         var yy = y * y;
         var zz = z * z;

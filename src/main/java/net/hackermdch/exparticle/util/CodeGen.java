@@ -3,6 +3,7 @@ package net.hackermdch.exparticle.util;
 import com.google.common.collect.ImmutableList;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.joml.Quaterniond;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
@@ -24,6 +25,7 @@ public class CodeGen {
     public static final int T_VOID = 0;
     public static final int T_INTMAT = 12;
     public static final int T_DOUBLEMAT = 13;
+    public static final int T_QUATERNION = 14;
     private static final Object2IntMap<EnumToken> IOP2OOP = new Object2IntOpenHashMap<>();
     private static final Object2IntMap<EnumToken> DOP2OOP = new Object2IntOpenHashMap<>();
     private static final Object2IntMap<EnumToken> DIOP2OOP = new Object2IntOpenHashMap<>();
@@ -475,6 +477,9 @@ public class CodeGen {
                         return T_DOUBLE;
                     }
                     case Quaternion -> {
+                        mv.visitLdcInsn(name);
+                        mv.visitMethodInsn(INVOKESTATIC, "net/hackermdch/exparticle/util/GlobalVariableUtil", "getQuaternion", "(Ljava/lang/String;)Lorg/joml/Quaterniond;", false);
+                        return T_QUATERNION;
                     }
                 }
             }
@@ -564,6 +569,12 @@ public class CodeGen {
                                         break label;
                                     }
                                     break;
+                                case T_QUATERNION:
+                                    if (parameterTypes[j] == Quaterniond.class) {
+                                        similarity += 999;
+                                        break label;
+                                    }
+                                    break;
                                 case T_BYTE:
                                 case T_SHORT:
                                 case T_LONG:
@@ -591,6 +602,9 @@ public class CodeGen {
             if (parameterTypes[i].isArray()) {
                 codeGenExp(args[i], parameterTypes[i] == int[][].class ? T_INTMAT : T_DOUBLEMAT);
                 sb.append(parameterTypes[i] == int[][].class ? "[[I" : "[[D");
+            } else if (parameterTypes[i] == Quaterniond.class) {
+                codeGenExp(args[i], T_QUATERNION);
+                sb.append("Lorg/joml/Quaterniond;");
             } else {
                 codeGenExp(args[i], parameterTypes[i] == int.class ? T_INT : T_DOUBLE);
                 sb.append(parameterTypes[i] == int.class ? "I" : "D");
@@ -613,6 +627,10 @@ public class CodeGen {
                 mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(method.getDeclaringClass()), name, sb.toString(), false);
                 mv.visitInsn(L2I);
                 return T_INT;
+            } else if (returnType == Quaterniond.class) {
+                sb.append("Lorg/joml/Quaterniond;");
+                mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(method.getDeclaringClass()), name, sb.toString(), false);
+                return T_QUATERNION;
             } else {
                 sb.append(returnType == int.class ? "I" : "D");
                 mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(method.getDeclaringClass()), name, sb.toString(), false);
@@ -788,6 +806,9 @@ public class CodeGen {
                         mv.visitMethodInsn(INVOKESTATIC, "net/hackermdch/exparticle/util/GlobalVariableUtil", "setDouble", "(DLjava/lang/String;)V", false);
                     }
                     case Quaternion -> {
+                        codeGenTypeTransform(targetType, T_QUATERNION);
+                        mv.visitLdcInsn(name);
+                        mv.visitMethodInsn(INVOKESTATIC, "net/hackermdch/exparticle/util/GlobalVariableUtil", "setQuaternion", "(Lorg/joml/Quaterniond;Ljava/lang/String;)V", false);
                     }
                 }
                 return;

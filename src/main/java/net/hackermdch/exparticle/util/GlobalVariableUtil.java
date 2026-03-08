@@ -1,5 +1,7 @@
 package net.hackermdch.exparticle.util;
 
+import org.joml.Quaterniond;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,6 +16,7 @@ public class GlobalVariableUtil {
         public final Type type;
         public int intValue;
         public double doubleValue;
+        public Quaterniond quaternion;
 
         public Var(Type type) {
             this.type = type;
@@ -33,6 +36,7 @@ public class GlobalVariableUtil {
             case Undefined -> throw new IllegalArgumentException();
             case Integer -> v.intValue = (int) value;
             case Double -> v.doubleValue = (double) value;
+            case Quaternion -> v.quaternion = (Quaterniond) value;
         }
         vars.put(name, v);
         update(name);
@@ -64,6 +68,11 @@ public class GlobalVariableUtil {
         return 0;
     }
 
+    public static Quaterniond getQuaternion(String name) {
+        if (vars.get(name) instanceof Var v) return v.quaternion;
+        return new Quaterniond();
+    }
+
     public static void setInt(int value, String name) {
         if (vars.get(name) instanceof Var v) v.intValue = value;
     }
@@ -72,11 +81,17 @@ public class GlobalVariableUtil {
         if (vars.get(name) instanceof Var v) v.doubleValue = value;
     }
 
+    public static void setQuaternion(Quaterniond q, String name) {
+        if (vars.get(name) instanceof Var v) v.quaternion = q;
+    }
+
     public static String peek(String name) {
         if (vars.get(name) instanceof Var v) {
             return switch (v.type) {
                 case Integer -> Integer.toString(v.intValue);
                 case Double -> Double.toString(v.doubleValue);
+                case Quaternion ->
+                        String.format("(%f, %f, %f, %f)", v.quaternion.x, v.quaternion.y, v.quaternion.z, v.quaternion.w);
                 default -> "null";
             };
         }
