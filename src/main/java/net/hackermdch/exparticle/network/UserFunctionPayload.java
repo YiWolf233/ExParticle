@@ -45,7 +45,7 @@ public class UserFunctionPayload implements CustomPacketPayload {
 
     private void handle(IPayloadContext context) {
         context.enqueueWork(() -> {
-            if (define) UserFunctionUtil.define(name, UserFunction.create(args, body));
+            if (define) UserFunctionUtil.define(name, UserFunction.create(name, args, body));
             else UserFunctionUtil.undefine(name);
         });
     }

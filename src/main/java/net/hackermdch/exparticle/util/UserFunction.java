@@ -12,6 +12,7 @@ public class UserFunction implements ICacheAble {
     }
 
     private static int index = 0;
+    private final String name;
     final String[] args;
     final Type retType;
     final String signature;
@@ -19,7 +20,8 @@ public class UserFunction implements ICacheAble {
     private Method method;
     boolean invalid;
 
-    private UserFunction(String[] args, Type retType, String body) {
+    private UserFunction(String name, String[] args, Type retType, String body) {
+        this.name = name;
         this.args = args;
         this.retType = retType;
         this.signature = String.format("(%s)D", "D".repeat(args.length));
@@ -29,6 +31,7 @@ public class UserFunction implements ICacheAble {
     @Override
     public void invalid() {
         invalid = true;
+        UserFunctionUtil.define(name, this);
     }
 
     void recompile() {
@@ -51,8 +54,8 @@ public class UserFunction implements ICacheAble {
         }
     }
 
-    public static UserFunction create(String args, String body) {
-        var uf = new UserFunction(Arrays.stream(args.split(",")).map(String::trim).toArray(String[]::new), Type.Double, body);
+    public static UserFunction create(String name, String args, String body) {
+        var uf = new UserFunction(name, Arrays.stream(args.split(",")).map(String::trim).toArray(String[]::new), Type.Double, body);
         uf.recompile();
         return uf;
     }
