@@ -115,8 +115,7 @@ public class CodeGen {
                     codeGenTypeTransform(codeGenFunctionCallExp(functionCallExp.name, functionCallExp.args), targetType);
             case Expression.AssignExp assignExp ->
                     codeGenTypeTransform(codeGenAssignExp(assignExp.varList, assignExp.expList, targetType != T_VOID), targetType);
-            case Expression.TernaryExp ternaryExp ->
-                    codeGenTypeTransform(codeGenTernaryExp(ternaryExp), targetType);
+            case Expression.TernaryExp ternaryExp -> codeGenTypeTransform(codeGenTernaryExp(ternaryExp), targetType);
             case null, default -> T_VOID;
         };
     }
@@ -498,9 +497,8 @@ public class CodeGen {
             return T_DOUBLE;
         }
         var methods = new ArrayList<Method>();
-        for (var method : METHODS) {
+        for (var method : METHODS)
             if (method.getName().equals(name) && method.getParameterCount() == args.length) methods.add(method);
-        }
         if (methods.isEmpty()) throw new RuntimeException("function not found: " + name);
         for (var arg : args) {
             if (arg.returnType == T_UNKNOW) {
@@ -509,95 +507,7 @@ public class CodeGen {
                 stopSimulation();
             }
         }
-        int maxSimilarity = 0;
-        int maxSimilarityIndex = T_UNKNOW;
-        if (args.length != 0) {
-            int i = 0;
-            while (i < methods.size()) {
-                var method = methods.get(i);
-                var parameterTypes = method.getParameterTypes();
-                int similarity = 0;
-                int j = 0;
-                while (true) {
-                    label:
-                    {
-                        if (j < args.length) {
-                            switch (args[j].returnType) {
-                                case T_DOUBLE:
-                                    if (parameterTypes[j] == int.class) {
-                                        similarity += 4;
-                                        break label;
-                                    }
-                                    if (parameterTypes[j] == double.class) {
-                                        similarity += 6;
-                                        break label;
-                                    }
-                                    break;
-                                case T_INT:
-                                    if (parameterTypes[j] == int.class) {
-                                        similarity += 6;
-                                        break label;
-                                    }
-                                    if (parameterTypes[j] == double.class) {
-                                        similarity += 5;
-                                        break label;
-                                    }
-                                    break;
-                                case T_INTMAT:
-                                    if (parameterTypes[j] == int[][].class) {
-                                        similarity += 6;
-                                        break label;
-                                    }
-                                    if (parameterTypes[j] == int.class) {
-                                        similarity += 3;
-                                        break label;
-                                    }
-                                    if (parameterTypes[j] == double.class) {
-                                        similarity += 2;
-                                        break label;
-                                    }
-                                    break;
-                                case T_DOUBLEMAT:
-                                    if (parameterTypes[j] == double[][].class) {
-                                        similarity += 6;
-                                        break label;
-                                    }
-                                    if (parameterTypes[j] == int.class) {
-                                        ++similarity;
-                                        break label;
-                                    }
-                                    if (parameterTypes[j] == double.class) {
-                                        similarity += 3;
-                                        break label;
-                                    }
-                                    break;
-                                case T_QUATERNION:
-                                    if (parameterTypes[j] == Quaterniond.class) {
-                                        similarity += 999;
-                                        break label;
-                                    }
-                                    break;
-                                case T_BYTE:
-                                case T_SHORT:
-                                case T_LONG:
-                                default:
-                                    throw new RuntimeException("bad type: " + args[j].returnType);
-                            }
-                        } else if (similarity > maxSimilarity) {
-                            maxSimilarity = similarity;
-                            maxSimilarityIndex = i;
-                        }
-                        ++i;
-                        break;
-                    }
-                    ++j;
-                }
-            }
-        } else {
-            maxSimilarityIndex = 0;
-        }
-        if (maxSimilarityIndex == T_UNKNOW) throw new RuntimeException("function not found: " + name);
-        var method = methods.get(maxSimilarityIndex);
+        var method = getMethod(name, args, methods);
         var parameterTypes = method.getParameterTypes();
         var returnType = method.getReturnType();
         var sb = new StringBuilder();
@@ -643,6 +553,95 @@ public class CodeGen {
         }
     }
 
+    private static Method getMethod(String name, Expression[] args, ArrayList<Method> methods) {
+        int maxSimilarity = 0;
+        int maxSimilarityIndex = T_UNKNOW;
+        if (args.length == 0) return methods.getFirst();
+        int i = 0;
+        while (i < methods.size()) {
+            var method = methods.get(i);
+            var parameterTypes = method.getParameterTypes();
+            int similarity = 0;
+            int j = 0;
+            while (true) {
+                label:
+                {
+                    if (j < args.length) {
+                        switch (args[j].returnType) {
+                            case T_DOUBLE:
+                                if (parameterTypes[j] == int.class) {
+                                    similarity += 4;
+                                    break label;
+                                }
+                                if (parameterTypes[j] == double.class) {
+                                    similarity += 6;
+                                    break label;
+                                }
+                                break;
+                            case T_INT:
+                                if (parameterTypes[j] == int.class) {
+                                    similarity += 6;
+                                    break label;
+                                }
+                                if (parameterTypes[j] == double.class) {
+                                    similarity += 5;
+                                    break label;
+                                }
+                                break;
+                            case T_INTMAT:
+                                if (parameterTypes[j] == int[][].class) {
+                                    similarity += 6;
+                                    break label;
+                                }
+                                if (parameterTypes[j] == int.class) {
+                                    similarity += 3;
+                                    break label;
+                                }
+                                if (parameterTypes[j] == double.class) {
+                                    similarity += 2;
+                                    break label;
+                                }
+                                break;
+                            case T_DOUBLEMAT:
+                                if (parameterTypes[j] == double[][].class) {
+                                    similarity += 6;
+                                    break label;
+                                }
+                                if (parameterTypes[j] == int.class) {
+                                    ++similarity;
+                                    break label;
+                                }
+                                if (parameterTypes[j] == double.class) {
+                                    similarity += 3;
+                                    break label;
+                                }
+                                break;
+                            case T_QUATERNION:
+                                if (parameterTypes[j] == Quaterniond.class) {
+                                    similarity += 999;
+                                    break label;
+                                }
+                                break;
+                            case T_BYTE:
+                            case T_SHORT:
+                            case T_LONG:
+                            default:
+                                throw new RuntimeException("bad type: " + args[j].returnType);
+                        }
+                    } else if (similarity > maxSimilarity) {
+                        maxSimilarity = similarity;
+                        maxSimilarityIndex = i;
+                    }
+                    ++i;
+                    break;
+                }
+                ++j;
+            }
+        }
+        if (maxSimilarityIndex == T_UNKNOW) throw new RuntimeException("function not found: " + name);
+        return methods.get(maxSimilarityIndex);
+    }
+
     private int codeGenAssignExp(Expression[] varList, Expression[] expList, boolean needReturn) {
         var types = new int[expList.length];
         for (int i = 0; i < expList.length; ++i) {
@@ -678,63 +677,39 @@ public class CodeGen {
         return needReturn ? types[expList.length - 1] : T_VOID;
     }
 
-    // 生成三元表达式的字节码
     private int codeGenTernaryExp(Expression.TernaryExp exp) {
-        // 若尚未确定返回类型，通过模拟计算分支类型并统一
         if (exp.returnType == T_UNKNOW) {
             startSimulation();
             int t1 = codeGenExp(exp.trueExp, T_UNKNOW);
             int t2 = codeGenExp(exp.falseExp, T_UNKNOW);
             stopSimulation();
-
-            // 类型提升规则：int + int = int，其他数值组合提升为 double
-            if (t1 == T_INT && t2 == T_INT) {
-                exp.returnType = T_INT;
-            } else if ((t1 == T_INT || t1 == T_DOUBLE) && (t2 == T_INT || t2 == T_DOUBLE)) {
-                exp.returnType = T_DOUBLE;
-            } else {
-                // 目前仅支持数值类型，遇到矩阵等类型时抛出明确异常
+            if (t1 == T_INT && t2 == T_INT) exp.returnType = T_INT;
+            else if ((t1 == T_INT || t1 == T_DOUBLE) && (t2 == T_INT || t2 == T_DOUBLE)) exp.returnType = T_DOUBLE;
+            else
                 throw new RuntimeException("Ternary operator only supports numeric types (int/double), got: " + t1 + " and " + t2);
-            }
         }
-
-        int targetType = exp.returnType;
-
-        // 生成条件表达式，强制转为 int（0/1）
-        int condType = codeGenExp(exp.cond, T_INT); // 条件强制转换为int
-        Label falseLabel = new Label();
-        Label endLabel = new Label();
-
-        mv.visitJumpInsn(IFEQ, falseLabel); // if (条件 == 0) 跳转到 falseLabel
-
-        // 真分支
-        int trueType = codeGenExp(exp.trueExp, targetType);
-        int resultVar = maxLocal;                 // 分配临时变量槽位
-        if (targetType == T_DOUBLE) {
-            mv.visitVarInsn(DSTORE, resultVar);   // 存储 double
-            maxLocal += 2;
-        } else {
-            mv.visitVarInsn(ISTORE, resultVar);   // 存储 int
-            maxLocal += 1;
-        }
-        mv.visitJumpInsn(GOTO, endLabel);         // 跳过假分支
-
-        // 假分支
-        mv.visitLabel(falseLabel);
-        int falseType = codeGenExp(exp.falseExp, targetType);
+        var targetType = exp.returnType;
+        var falseLabel = new Label();
+        var endLabel = new Label();
+        codeGenExp(exp.cond, T_INT);
+        mv.visitJumpInsn(IFEQ, falseLabel);
+        codeGenExp(exp.trueExp, targetType);
+        var resultVar = maxLocal;
         if (targetType == T_DOUBLE) {
             mv.visitVarInsn(DSTORE, resultVar);
+            maxLocal += 2;
         } else {
             mv.visitVarInsn(ISTORE, resultVar);
+            maxLocal += 1;
         }
-
-        // 合并
+        mv.visitJumpInsn(GOTO, endLabel);
+        mv.visitLabel(falseLabel);
+        codeGenExp(exp.falseExp, targetType);
+        if (targetType == T_DOUBLE) mv.visitVarInsn(DSTORE, resultVar);
+        else mv.visitVarInsn(ISTORE, resultVar);
         mv.visitLabel(endLabel);
-        if (targetType == T_DOUBLE) {
-            mv.visitVarInsn(DLOAD, resultVar);   // 加载结果（double）
-        } else {
-            mv.visitVarInsn(ILOAD, resultVar);   // 加载结果（int）
-        }
+        if (targetType == T_DOUBLE) mv.visitVarInsn(DLOAD, resultVar);
+        else mv.visitVarInsn(ILOAD, resultVar);
         return targetType;
     }
 

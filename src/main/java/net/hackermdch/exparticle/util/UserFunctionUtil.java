@@ -40,7 +40,7 @@ public class UserFunctionUtil {
                 return f;
             }
         } catch (Throwable e) {
-            functions.remove(name);
+            undefine(name);
             ClientMessageUtil.addChatMessage(e);
             ExParticle.LOGGER.error("Recompile function failed: ", e);
         }

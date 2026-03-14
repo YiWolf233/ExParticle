@@ -232,14 +232,13 @@ public class Expression {
         }
     }
 
-    // 三元表达式节点
     public static class TernaryExp extends Expression {
-        public final Expression cond;     // 条件表达式
-        public final Expression trueExp;  // 真分支
-        public final Expression falseExp; // 假分支
+        public final Expression cond;
+        public final Expression trueExp;
+        public final Expression falseExp;
 
         public TernaryExp(int line, Expression cond, Expression trueExp, Expression falseExp) {
-            super(line, T_UNKNOW);         // 类型未知，延迟到代码生成时确定
+            super(line, T_UNKNOW);
             this.cond = cond;
             this.trueExp = trueExp;
             this.falseExp = falseExp;
