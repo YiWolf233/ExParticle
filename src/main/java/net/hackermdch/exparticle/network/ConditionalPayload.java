@@ -26,10 +26,12 @@ public class ConditionalPayload implements CustomPacketPayload {
     private final double x;
     private final double y;
     private final double z;
+    private final double size;
     private final float red;
     private final float green;
     private final float blue;
     private final float alpha;
+    private final int light;
     private final double vx;
     private final double vy;
     private final double vz;
@@ -46,14 +48,16 @@ public class ConditionalPayload implements CustomPacketPayload {
     private final String group;
     private final ParticleOptions effect;
 
-    public ConditionalPayload(ParticleOptions effect, Vec3 pos, Vector4f color, Vec3 speed, Vec3 range, String expression, double step, int age, String speedExpression, double speedStep, String group) {
+    public ConditionalPayload(ParticleOptions effect, Vec3 pos, double size, Vector4f color, int light, Vec3 speed, Vec3 range, String expression, double step, int age, String speedExpression, double speedStep, String group) {
         this.x = pos.x;
         this.y = pos.y;
         this.z = pos.z;
+        this.size = size;
         this.red = color.x;
         this.green = color.y;
         this.blue = color.z;
         this.alpha = color.w;
+        this.light = light;
         this.vx = speed.x;
         this.vy = speed.y;
         this.vz = speed.z;
@@ -76,10 +80,12 @@ public class ConditionalPayload implements CustomPacketPayload {
         x = buf.readDouble();
         y = buf.readDouble();
         z = buf.readDouble();
+        size = buf.readDouble();
         red = buf.readFloat();
         green = buf.readFloat();
         blue = buf.readFloat();
         alpha = buf.readFloat();
+        light = buf.readInt();
         vx = buf.readDouble();
         vy = buf.readDouble();
         vz = buf.readDouble();
@@ -104,10 +110,12 @@ public class ConditionalPayload implements CustomPacketPayload {
         buf.writeDouble(x);
         buf.writeDouble(y);
         buf.writeDouble(z);
+        buf.writeDouble(size);
         buf.writeFloat(red);
         buf.writeFloat(green);
         buf.writeFloat(blue);
         buf.writeFloat(alpha);
+        buf.writeInt(light);
         buf.writeDouble(vx);
         buf.writeDouble(vy);
         buf.writeDouble(vz);
@@ -144,8 +152,9 @@ public class ConditionalPayload implements CustomPacketPayload {
                         data.s1 = Math.atan2(cz, cx);
                         data.s2 = Math.atan2(cy, Math.hypot(cx, cz));
                         data.dis = Math.sqrt(cx * cx + cy * cy + cz * cz);
+                        double lightVal = (light == -1) ? Double.NaN : light / 15.0;
                         if (exe.invoke() != 0)
-                            ParticleUtil.spawnParticle(effect, x + cx, y + cy, z + cz, x, y, z, red, green, blue, alpha, vx, vy, vz, age, expression, step, group);
+                            ParticleUtil.spawnParticle(effect, x + cx, y + cy, z + cz, x, y, z, size, red, green, blue, alpha, lightVal, vx, vy, vz, age, expression, step, group);
                     }
                 }
             }

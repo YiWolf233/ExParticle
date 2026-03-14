@@ -29,6 +29,7 @@ public class VideoPayload implements CustomPacketPayload {
     private final int zRotate;
     private final boolean flip;
     private final double dpb;
+    private final double size;
     private final double vx;
     private final double vy;
     private final double vz;
@@ -39,7 +40,7 @@ public class VideoPayload implements CustomPacketPayload {
     private final String group;
     private final ParticleOptions effect;
 
-    public VideoPayload(ParticleOptions effect, Vec3 pos, String path, double scaling, int xRotate, int yRotate, int zRotate, int flip, double dpb, Vec3 speed, int age, String speedExpression, double speedStep, String group) {
+    public VideoPayload(ParticleOptions effect, Vec3 pos, String path, double scaling, int xRotate, int yRotate, int zRotate, int flip, double dpb, double size, Vec3 speed, int age, String speedExpression, double speedStep, String group) {
         this.effect = effect;
         this.x = pos.x;
         this.y = pos.y;
@@ -51,6 +52,7 @@ public class VideoPayload implements CustomPacketPayload {
         this.zRotate = zRotate;
         this.flip = flip != 0;
         this.dpb = dpb;
+        this.size = size;
         if (speed == null) speed = Vec3.ZERO;
         vx = speed.x;
         vy = speed.y;
@@ -74,6 +76,7 @@ public class VideoPayload implements CustomPacketPayload {
         zRotate = buf.readInt();
         flip = buf.readBoolean();
         dpb = buf.readDouble();
+        size = buf.readDouble();
         vx = buf.readDouble();
         vy = buf.readDouble();
         vz = buf.readDouble();
@@ -99,6 +102,7 @@ public class VideoPayload implements CustomPacketPayload {
         buf.writeInt(zRotate);
         buf.writeBoolean(flip);
         buf.writeDouble(dpb);
+        buf.writeDouble(size);
         buf.writeDouble(vx);
         buf.writeDouble(vy);
         buf.writeDouble(vz);
@@ -115,7 +119,7 @@ public class VideoPayload implements CustomPacketPayload {
     }
 
     private void handle(IPayloadContext context) {
-        context.enqueueWork(() -> ParticleUtil.spawnVideoParticle(effect, x, y, z, path, scaling, xRotate, yRotate, zRotate, flip, dpb, vx, vy, vz, age, speedExpression, speedStep, group));
+        context.enqueueWork(() -> ParticleUtil.spawnVideoParticle(effect, x, y, z, path, scaling, xRotate, yRotate, zRotate, flip, dpb, size, vx, vy, vz, age, speedExpression, speedStep, group));
     }
 
     @Override
