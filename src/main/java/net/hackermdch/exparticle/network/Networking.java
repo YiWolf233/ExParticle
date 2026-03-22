@@ -18,6 +18,7 @@ public class Networking {
         ImageMatrixPayload.register(registrar);
         VideoPayload.register(registrar);
         VideoMatrixPayload.register(registrar);
+        TextPayload.register(registrar);
         GroupRemovePayload.register(registrar);
         GroupChangePayload.register(registrar);
         GlobalVariablePayload.register(registrar);

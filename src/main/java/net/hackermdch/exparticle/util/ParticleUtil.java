@@ -5,6 +5,8 @@ import net.hackermdch.exparticle.ExParticle;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.FastColor;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 
 import java.awt.*;
@@ -87,15 +89,12 @@ public class ParticleUtil {
                     float green = (float) ((pixel & 0xff00) >>> 8) / 255.0F;
                     float blue = (float) (pixel & 0xff) / 255.0F;
                     double[][] pos = MatrixUtil.matDiv(MatrixUtil.matMul(rotateFlipMat, new int[][]{{col}, {row}, {0}, {1}}), dpb);
-                    if (matrix != null) {
-                        pos = MatrixUtil.matMul(matrix, pos);
-                    }
+                    if (matrix != null) pos = MatrixUtil.matMul(matrix, pos);
                     double dx = pos[0][0];
                     double dy = pos[1][0];
                     double dz = pos[2][0];
-                    if (alpha != 0.0F) {
+                    if (alpha != 0.0F)
                         spawnParticle(effect, x + dx, y + dy, z + dz, x, y, z, red, green, blue, alpha, vx, vy, vz, age, speedExpression, speedStep, group);
-                    }
                 }
             }
         } catch (IOException e) {
@@ -113,6 +112,34 @@ public class ParticleUtil {
 
     public static void spawnVideoParticle(ParticleOptions effect, double x, double y, double z, String path, double scaling, int xRotate, int yRotate, int zRotate, boolean flip, double[][] matrix, double dpb, double vx, double vy, double vz, int age, String speedExpression, double speedStep, String group) {
         VideoUtil.decoder(path, new VideoConsumer(effect, x, y, z, scaling, xRotate, yRotate, zRotate, flip, matrix, dpb, vx, vy, vz, age, speedExpression, speedStep, group));
+    }
+
+    public static void spawnTextParticle(ParticleOptions effect, double x, double y, double z, Component text, String expression, double dpb, double vx, double vy, double vz, int age, String speedExpression, double speedStep, String group) {
+        var exe = ExpressionUtil.parse(expression);
+        var data = exe != null ? exe.getData() : new ParticleStruct();
+        try (var img = TextUtil.toImage(text)) {
+            int rows = img.getHeight();
+            int cols = img.getWidth();
+            for (int row = 0; row < rows; ++row) {
+                for (int col = 0; col < cols; ++col) {
+                    int pixel = img.getPixelRGBA(col, row);
+                    float alpha = FastColor.ABGR32.alpha(pixel) / 255f;
+                    float red = FastColor.ABGR32.red(pixel) / 255f;
+                    float green = FastColor.ABGR32.green(pixel) / 255f;
+                    float blue = FastColor.ABGR32.blue(pixel) / 255f;
+                    double[][] pos = MatrixUtil.matDiv(new int[][]{{col}, {row}, {0}, {1}}, dpb);
+                    data.x = pos[0][0];
+                    data.y = pos[1][0];
+                    data.z = pos[2][0];
+                    if (exe != null) exe.invoke();
+                    double dx = data.x;
+                    double dy = data.y;
+                    double dz = data.z;
+                    if (alpha != 0.0F)
+                        spawnParticle(effect, x + dx, y + dy, z + dz, x, y, z, red, green, blue, alpha, vx, vy, vz, age, speedExpression, speedStep, group);
+                }
+            }
+        }
     }
 
     public static int[][] getRotateFlipMat(int xRotate, int yRotate, int zRotate, boolean flip, int rows, int cols) {

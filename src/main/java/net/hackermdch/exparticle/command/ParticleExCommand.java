@@ -21,6 +21,7 @@ public class ParticleExCommand {
         ImageMatrixCommand.register(root, context);
         VideoCommand.register(root, context);
         VideoMatrixCommand.register(root, context);
+        TextCommand.register(root, context);
         GroupCommand.register(root);
         GlobalVariableCommand.register(root);
         UserFunctionCommand.register(root);
