@@ -25,7 +25,6 @@ import static net.hackermdch.exparticle.network.NetworkUtils.*;
 public class CustomVideoPayload implements CustomPacketPayload {
     private static final Type<CustomVideoPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(MOD_ID, "custom_video"));
     private static final StreamCodec<RegistryFriendlyByteBuf, CustomVideoPayload> CODEC = StreamCodec.ofMember(CustomVideoPayload::write, CustomVideoPayload::new);
-
     private final double x, y, z;
     private final String path;
     private final double scaling;

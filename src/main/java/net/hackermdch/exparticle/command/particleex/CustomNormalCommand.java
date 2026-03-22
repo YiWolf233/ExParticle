@@ -20,17 +20,17 @@ public class CustomNormalCommand {
     public static void register(LiteralArgumentBuilder<CommandSourceStack> parent, CommandBuildContext ctx) {
         parent.then(Commands.literal("custom-normal")
                 .then(Commands.argument("name", ParticleArgument.particle(ctx))
-                .then(Commands.argument("pos", Vec3Argument.vec3())
-                .then(Commands.argument("attr", SuggestStringArgumentType.argument("null", "\"size=1; cr,cg,cb,alpha=1,1,1,1; age=100\""))
-                .then(Commands.argument("range", Range3ArgumentType.range3())
-                .then(Commands.argument("count", SuggestIntegerArgumentType.integer(0, Integer.MAX_VALUE, 1))
-                .executes(execute(false, false, false))
-                .then(Commands.argument("speedExpression", SuggestStringArgumentType.argument("null", "\"vy=0.1\""))
-                .executes(execute(true, false, false))
-                .then(Commands.argument("speedStep", SuggestDoubleArgumentType.doubleArg(Math.ulp(0.0), Double.MAX_VALUE, 1.0))
-                .executes(execute(true, true, false))
-                .then(Commands.argument("group", SuggestStringArgumentType.argument("null"))
-                .executes(execute(true, true, true)))))))))));
+                        .then(Commands.argument("pos", Vec3Argument.vec3())
+                                .then(Commands.argument("attr", SuggestStringArgumentType.argument("null", "\"size=1; cr,cg,cb,alpha=1,1,1,1; age=100\""))
+                                        .then(Commands.argument("range", Range3ArgumentType.range3())
+                                                .then(Commands.argument("count", SuggestIntegerArgumentType.integer(0, Integer.MAX_VALUE, 1))
+                                                        .executes(execute(false, false, false))
+                                                        .then(Commands.argument("speedExpression", SuggestStringArgumentType.argument("null", "\"vy=0.1\""))
+                                                                .executes(execute(true, false, false))
+                                                                .then(Commands.argument("speedStep", SuggestDoubleArgumentType.doubleArg(Math.ulp(0.0), Double.MAX_VALUE, 1.0))
+                                                                        .executes(execute(true, true, false))
+                                                                        .then(Commands.argument("group", SuggestStringArgumentType.argument("null"))
+                                                                                .executes(execute(true, true, true)))))))))));
     }
 
     private static Command<CommandSourceStack> execute(boolean... flags) {

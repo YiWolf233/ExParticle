@@ -20,20 +20,20 @@ public class CustomImageMatrixCommand {
     public static void register(LiteralArgumentBuilder<CommandSourceStack> parent, CommandBuildContext ctx) {
         parent.then(Commands.literal("custom-image-matrix")
                 .then(Commands.argument("name", ParticleArgument.particle(ctx))
-                .then(Commands.argument("pos", Vec3Argument.vec3())
-                .then(Commands.argument("path", FileArgumentType.file(ImageUtil.IMAGE_DIR))
-                .then(Commands.argument("scaling", SuggestDoubleArgumentType.doubleArg(0.0, Double.MAX_VALUE, 0.1))
-                .then(Commands.argument("matrix", SuggestStringArgumentType.argument("E3", "E4", "\"(1,0,0,0,,0,1,0,0,,0,0,1,-100,,0,0,0,1)\""))
-                .then(Commands.argument("dpb", SuggestDoubleArgumentType.doubleArg(0.0, Double.MAX_VALUE, 10.0))
-                .executes(execute(false, false, false))
-                .then(Commands.argument("attr", SuggestStringArgumentType.argument("null", "\"size=0.75\""))
-                .executes(execute(true, false, false))
-                .then(Commands.argument("speedExpression", SuggestStringArgumentType.argument("null", "\"vy=0.1\""))
-                .executes(execute(true, true, false))
-                .then(Commands.argument("speedStep", SuggestDoubleArgumentType.doubleArg(Math.ulp(0.0), Double.MAX_VALUE, 1.0))
-                .executes(execute(true, true, true))
-                .then(Commands.argument("group", SuggestStringArgumentType.argument("null"))
-                .executes(execute(true, true, true, true)))))))))))));
+                        .then(Commands.argument("pos", Vec3Argument.vec3())
+                                .then(Commands.argument("path", FileArgumentType.file(ImageUtil.IMAGE_DIR))
+                                        .then(Commands.argument("scaling", SuggestDoubleArgumentType.doubleArg(0.0, Double.MAX_VALUE, 0.1))
+                                                .then(Commands.argument("matrix", SuggestStringArgumentType.argument("E3", "E4", "\"(1,0,0,0,,0,1,0,0,,0,0,1,-100,,0,0,0,1)\""))
+                                                        .then(Commands.argument("dpb", SuggestDoubleArgumentType.doubleArg(0.0, Double.MAX_VALUE, 10.0))
+                                                                .executes(execute(false, false, false))
+                                                                .then(Commands.argument("attr", SuggestStringArgumentType.argument("null", "\"size=0.75\""))
+                                                                        .executes(execute(true, false, false))
+                                                                        .then(Commands.argument("speedExpression", SuggestStringArgumentType.argument("null", "\"vy=0.1\""))
+                                                                                .executes(execute(true, true, false))
+                                                                                .then(Commands.argument("speedStep", SuggestDoubleArgumentType.doubleArg(Math.ulp(0.0), Double.MAX_VALUE, 1.0))
+                                                                                        .executes(execute(true, true, true))
+                                                                                        .then(Commands.argument("group", SuggestStringArgumentType.argument("null"))
+                                                                                                .executes(execute(true, true, true, true)))))))))))));
     }
 
     private static Command<CommandSourceStack> execute(boolean... flags) {

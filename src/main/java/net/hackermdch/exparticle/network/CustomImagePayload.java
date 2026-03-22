@@ -21,7 +21,6 @@ import static net.hackermdch.exparticle.network.NetworkUtils.*;
 public class CustomImagePayload implements CustomPacketPayload {
     private static final Type<CustomImagePayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(MOD_ID, "custom_image"));
     private static final StreamCodec<RegistryFriendlyByteBuf, CustomImagePayload> CODEC = StreamCodec.ofMember(CustomImagePayload::write, CustomImagePayload::new);
-
     private final double x, y, z;
     private final String path;
     private final double scaling;

@@ -91,7 +91,7 @@ public abstract class ParticleMixin implements IParticle {
     }
 
     public void setCustomLight(double light) {
-        customLight = Double.isNaN(light) ? Double.NaN : ((int)(light * 255) & 0xFF) / 255.0;
+        customLight = Double.isNaN(light) ? Double.NaN : ((int) (light * 255) & 0xFF) / 255.0;
     }
 
     public double getCustomLight() {
@@ -130,9 +130,9 @@ public abstract class ParticleMixin implements IParticle {
                 data.ds1 = Math.atan2(z - centerZ, x - centerX);
                 data.ds2 = Math.atan2(y - centerY, Math.hypot(x - centerX, z - centerZ));
             }
-            data.vx = this.xd;
-            data.vy = this.yd;
-            data.vz = this.zd;
+            data.vx = xd;
+            data.vy = yd;
+            data.vz = zd;
             data.x = x - centerX;
             data.y = y - centerY;
             data.z = z - centerZ;
@@ -158,12 +158,8 @@ public abstract class ParticleMixin implements IParticle {
                 remove();
                 return;
             }
-            if (!Double.isNaN(data.size) && data.size != customSize) {
-                setCustomSize(data.size);
-            }
-            if (!Double.isNaN(data.light) && data.light != customLight) {
-                setCustomLight(data.light);
-            }
+            if (!Double.isNaN(data.size) && data.size != customSize) setCustomSize(data.size);
+            if (!Double.isNaN(data.light) && data.light != customLight) setCustomLight(data.light);
             if (!Double.isNaN(data.vx) || !Double.isNaN(data.vy) || !Double.isNaN(data.vz)) {
                 setPos(preX, preY, preZ);
                 data.vx = nanToZero(data.vx);

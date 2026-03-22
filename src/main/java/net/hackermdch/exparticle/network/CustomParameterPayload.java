@@ -105,7 +105,6 @@ public class CustomParameterPayload implements CustomPacketPayload {
     private void handle(IPayloadContext context) {
         context.enqueueWork(() -> {
             if (tick) {
-                // 使用新方法启动自定义 tick 任务
                 ParticleUtil.spawnCustomTickParticle(effect, x, y, z, begin, end, expression, step, cpt, speedExpression, speedStep, group, polar);
             } else {
                 var exe = ExpressionUtil.parse(expression);
@@ -124,7 +123,6 @@ public class CustomParameterPayload implements CustomPacketPayload {
                         dy = data.y;
                         dz = data.z;
                     }
-                    // 使用构建器创建粒子（非 tick 模式）
                     CustomParticleBuilder.buildParticle(effect, x + dx, y + dy, z + dz, x, y, z, speedExpression, speedStep, group, data);
                 }
             }

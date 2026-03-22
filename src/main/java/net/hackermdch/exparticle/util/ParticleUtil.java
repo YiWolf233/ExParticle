@@ -379,9 +379,6 @@ public class ParticleUtil {
         }
     }
 
-    /**
-     * 自定义 tick 任务，每 tick 生成一批由表达式完全控制的粒子。
-     */
     public static class TickCustomParticleTask extends TimerTask {
         private final ParticleOptions particleType;
         private final double x, y, z;
@@ -428,18 +425,12 @@ public class ParticleUtil {
                     dy = data.y;
                     dz = data.z;
                 }
-                // 使用构建器创建粒子（构建器需在 util 包中可用）
                 CustomParticleBuilder.buildParticle(particleType, x + dx, y + dy, z + dz, x, y, z, speedExpression, speedStep, group, data);
             }
-            if (t <= end) {
-                addTask(new TickEndTask(this), false);
-            }
+            if (t <= end) addTask(new TickEndTask(this), false);
         }
     }
 
-    /**
-     * 启动一个自定义 tick 粒子任务。
-     */
     public static void spawnCustomTickParticle(ParticleOptions effect, double x, double y, double z, double begin, double end, String expression, double step, int cpt, String speedExpression, double speedStep, String group, boolean polar) {
         new TickCustomParticleTask(effect, x, y, z, begin, end, expression, step, cpt, speedExpression, speedStep, group, polar).run();
     }

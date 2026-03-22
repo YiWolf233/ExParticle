@@ -23,7 +23,6 @@ import static net.hackermdch.exparticle.network.NetworkUtils.*;
 public class CustomConditionalPayload implements CustomPacketPayload {
     private static final Type<CustomConditionalPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(MOD_ID, "custom_conditional"));
     private static final StreamCodec<RegistryFriendlyByteBuf, CustomConditionalPayload> CODEC = StreamCodec.ofMember(CustomConditionalPayload::write, CustomConditionalPayload::new);
-
     private final double x, y, z;
     private final String attrExpression;
     private final double dx, dy, dz;
@@ -102,11 +101,9 @@ public class CustomConditionalPayload implements CustomPacketPayload {
 
     private void handle(IPayloadContext context) {
         context.enqueueWork(() -> {
-
             var attrExe = ExpressionUtil.parse(attrExpression);
             boolean hasAttrExpression = attrExe != null;
             ParticleStruct attrData = hasAttrExpression ? attrExe.getData() : new ParticleStruct();
-
             var exe = ExpressionUtil.parse(expression);
             var data = Objects.requireNonNull(exe).getData();
             for (double cx = -dx; cx <= dx; cx += step) {
@@ -119,9 +116,7 @@ public class CustomConditionalPayload implements CustomPacketPayload {
                         data.s2 = Math.atan2(cy, Math.hypot(cx, cz));
                         data.dis = Math.sqrt(cx * cx + cy * cy + cz * cz);
                         if (exe.invoke() == 0) continue;
-                        if (hasAttrExpression) {
-                            attrExe.invoke();
-                        }
+                        if (hasAttrExpression) attrExe.invoke();
                         CustomParticleBuilder.buildParticle(effect, x + cx, y + cy, z + cz, x, y, z, speedExpression, speedStep, group, attrData);
                     }
                 }
