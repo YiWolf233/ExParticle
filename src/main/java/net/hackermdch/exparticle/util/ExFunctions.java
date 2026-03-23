@@ -1,6 +1,10 @@
 package net.hackermdch.exparticle.util;
 
+import org.joml.Matrix4d;
 import org.joml.Quaterniond;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import static net.minecraft.util.Mth.floor;
 
@@ -139,11 +143,7 @@ public class ExFunctions {
     }
 
     public static Quaterniond e2q(double pitch, double yaw, double roll) {
-        var q = new Quaterniond();
-        q.mul(new Quaterniond().rotationZ(roll));
-        q.mul(new Quaterniond().rotationX(pitch));
-        q.mul(new Quaterniond().rotationY(yaw));
-        return q;
+        return new Quaterniond().rotationXYZ(pitch, yaw, roll);
     }
 
     public static Quaterniond normalize(Quaterniond q) {
@@ -159,34 +159,12 @@ public class ExFunctions {
     }
 
     public static double[][] rotate(Quaterniond q) {
-        var x = q.x;
-        var y = q.y;
-        var z = q.z;
-        var w = q.w;
-        var xx = x * x;
-        var yy = y * y;
-        var zz = z * z;
-        var xy = x * y;
-        var xz = x * z;
-        var yz = y * z;
-        var wx = w * x;
-        var wy = w * y;
-        var wz = w * z;
+        var buf = new Matrix4d().rotate(q).get(ByteBuffer.allocateDirect(16 * 8).order(ByteOrder.nativeOrder()).asDoubleBuffer());
         var mat = new double[4][4];
-        mat[0][0] = 1.0 - 2.0 * (yy + zz);
-        mat[1][0] = 2.0 * (xy + wz);
-        mat[2][0] = 2.0 * (xz - wy);
-        mat[3][0] = 0.0;
-        mat[0][1] = 2.0 * (xy - wz);
-        mat[1][1] = 1.0 - 2.0 * (xx + zz);
-        mat[2][1] = 2.0 * (yz + wx);
-        mat[3][1] = 0.0;
-        mat[0][2] = 2.0 * (xz + wy);
-        mat[1][2] = 2.0 * (yz - wx);
-        mat[2][2] = 1.0 - 2.0 * (xx + yy);
-        mat[3][2] = 0.0;
-        mat[0][3] = mat[1][3] = mat[2][3] = 0.0;
-        mat[3][3] = 1.0;
+        buf.get(mat[0], 0, 4);
+        buf.get(mat[1], 0, 4);
+        buf.get(mat[2], 0, 4);
+        buf.get(mat[3], 0, 4);
         return mat;
     }
 
