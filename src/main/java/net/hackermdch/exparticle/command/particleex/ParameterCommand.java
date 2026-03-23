@@ -22,7 +22,7 @@ import org.joml.Vector4f;
 public class ParameterCommand {
     public static void register(LiteralArgumentBuilder<CommandSourceStack> parent, CommandBuildContext ctx) {
         parent.then(Commands.literal("parameter")
-                .then(getStart(getColor(getMid(new String[]{"null", "\"x,y=t,sin(t)\"", "\"x=t;y=t^2\"", "\"x,y,z=t,sin(t),0;(x,y,z)=(x,y,z,1)*rotateDeg(0,60,0)*translate(5,0,0)\""},
+                .then(getStart(getColor(getMid(new String[]{"null", "\"x,y=t,sin(t)\"", "\"x=t;y=t^2\"", "\"x,y,z=t,sin(t),0;(x,y,z)=(x,y,z,1)*rotateDeg(0,60,0)*translate(5,0,0)\"", "\"(x,y,z)=(t,t,t,1)*rotate(slerp(t/5,e2qd(0,0,0),e2qd(0,0,190)))\""},
                         (context) -> execute(
                                 context,
                                 false, false, false,
@@ -200,7 +200,7 @@ public class ParameterCommand {
                         ))), ctx)
                 )
         ).then(Commands.literal("tick-parameter")
-                .then(getStart(getColor(getMid(new String[]{"null", "\"x,y=t,sin(t)\"", "\"x=t;y=t^2\"", "\"x,y,z=t,sin(t),0;(x,y,z)=(x,y,z,1)*rotateDeg(0,60,0)*translate(5,0,0)\""},
+                .then(getStart(getColor(getMid(new String[]{"null", "\"x,y=t,sin(t)\"", "\"x=t;y=t^2\"", "\"x,y,z=t,sin(t),0;(x,y,z)=(x,y,z,1)*rotateDeg(0,60,0)*translate(5,0,0)\"", "\"(x,y,z)=(t,t,t,1)*rotate(slerp(t/5,e2qd(0,0,0),e2qd(0,0,190)))\""},
                         (context) -> execute(
                                 context,
                                 false, true, false,

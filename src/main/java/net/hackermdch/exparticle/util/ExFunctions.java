@@ -134,22 +134,28 @@ public class ExFunctions {
         return mat;
     }
 
+    public static Quaterniond e2qd(double pitch, double yaw, double roll) {
+        return e2q(Math.toRadians(pitch), Math.toRadians(yaw), Math.toRadians(roll));
+    }
+
+    public static Quaterniond e2q(double pitch, double yaw, double roll) {
+        var q = new Quaterniond();
+        q.mul(new Quaterniond().rotationZ(roll));
+        q.mul(new Quaterniond().rotationX(pitch));
+        q.mul(new Quaterniond().rotationY(yaw));
+        return q;
+    }
+
+    public static Quaterniond normalize(Quaterniond q) {
+        return q.normalize();
+    }
+
     public static double[][] rotateDeg(double pitch, double yaw, double roll) {
-        return rotate(Math.toRadians(pitch), Math.toRadians(yaw), Math.toRadians(roll));
+        return rotate(e2qd(pitch, yaw, roll));
     }
 
     public static double[][] rotate(double pitch, double yaw, double roll) {
-        var cy = Math.cos(yaw * 0.5);
-        var sy = Math.sin(yaw * 0.5);
-        var cp = Math.cos(pitch * 0.5);
-        var sp = Math.sin(pitch * 0.5);
-        var cr = Math.cos(roll * 0.5);
-        var sr = Math.sin(roll * 0.5);
-        var crcp = cr * cp;
-        var srcp = sr * cp;
-        var crsp = cr * sp;
-        var srsp = sr * sp;
-        return rotate(new Quaterniond(crsp * cy - srcp * sy, crcp * sy, srcp * cy + crsp * sy, crcp * cy));
+        return rotate(e2q(pitch, yaw, roll));
     }
 
     public static double[][] rotate(Quaterniond q) {
